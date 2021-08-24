@@ -8,15 +8,37 @@ import * as utils from './utils'
 
 // Dummy main module to run the code generator outside ESLint, to be used for debugging.
 
-const schemaFilePath = path.join(__dirname, '../src/schemas/apollo-schema.graphql')
+const schemaFilePath = path.join(__dirname, '../src/schemas/debug-schema.graphql')
 
-const gqlStr = `
-query GetGreeting($language: String!) {
-    greeting(language: $language) {
-        __typename
-        message
+// Dummy tagged template to enable GraphQL plugin on gql`...` strings.
+const gql = ([literal]: TemplateStringsArray): string => literal
+
+const gqlStr = gql`
+  query ($bundleId: TrainingCenterBundleId!) {
+    visibleTrainingCenterBundles(bundle_id: $bundleId) {
+      caregiver_id
+      agency_id
+      caregiver_visible_date
+      agency {
+        # name # Common fields can be used only on interfaces, not on unions. Interfaces are a kind of union.
+        # TODO: Using name on a union type is not caught by graphql.validate, as apparently FieldsOnCorrectTypeRule is not triggered.
+        # It is only detected by the VSCode plugin.
+        # WEIRD: apparently now it does trigger a validation error..
+        ... {
+          __typename
+          # streetAddress
+          ... on PhysicalAgency {
+            __typename
+            streetAddress
+          }
+        }
+        ... on OnlineAgency {
+          __typename
+          website
+        }
+      }
     }
-}
+  }
 `
 
 const main = () => {
@@ -41,7 +63,11 @@ const main = () => {
         } else {
           const gqlOperationDocument = res.value
 
-          const exceptionOrValidationErrors = utils.catchExceptions(graphql.validate)(schema, gqlOperationDocument)
+          const exceptionOrValidationErrors = utils.catchExceptions(graphql.validate)(
+            schema,
+            gqlOperationDocument,
+            graphql.specifiedRules, // TODO: Probably not necessary, should be the default.
+          )
           const validationErrors = utils.isError(exceptionOrValidationErrors)
             ? [exceptionOrValidationErrors.error]
             : exceptionOrValidationErrors.value

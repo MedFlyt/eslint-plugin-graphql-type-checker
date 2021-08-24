@@ -1,6 +1,6 @@
 type Query {
   visibleTrainingCenterBundles(
-    bundle_id: TrainingCenterBundleId_Filter
+    bundle_id: TrainingCenterBundleId
   ): [VisibleTrainingCenterBundle!]!
 }
 
@@ -10,6 +10,7 @@ type VisibleTrainingCenterBundle {
   caregiver_id: CaregiverId!
   agency_id: AgencyId!
   caregiver_visible_date: LocalDate!
+  # agency: AgencyCommon!
   agency: Agency!
 }
 
@@ -17,7 +18,19 @@ scalar CaregiverId
 
 scalar LocalDate
 
-type Agency {
+union Agency = PhysicalAgency | OnlineAgency
+
+interface AgencyCommon {
+  id: AgencyId!
+  name: String!
+}
+type PhysicalAgency implements AgencyCommon {
+  id: AgencyId!
+  name: String!
+  streetAddress: String!
+}
+
+type OnlineAgency implements AgencyCommon {
   id: AgencyId!
   name: String!
   website: String!
@@ -25,7 +38,7 @@ type Agency {
 
 scalar AgencyId
 
-input TrainingCenterBundleId_Filter {
-  eq: TrainingCenterBundleId
-  in: [TrainingCenterBundleId!]
-}
+# input TrainingCenterBundleId_Filter {
+#   eq: TrainingCenterBundleId
+#   in: [TrainingCenterBundleId!]
+# }
