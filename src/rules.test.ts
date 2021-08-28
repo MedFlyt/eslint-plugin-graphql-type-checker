@@ -17,6 +17,10 @@ const ruleOptions: RuleOptions = [
         schemaFilePath: "src/schemas/apollo-schema.graphql",
       },
       {
+        methodName: "tgql",
+        schemaFilePath: "src/schemas/apollo-schema.graphql",
+      },
+      {
         objectName: "AgencyMemberGraphQL",
         methodName: "query",
         gqlLiteralArgumentIndex: 1,
@@ -143,7 +147,7 @@ GraphQL request:1:8
   ],
 });
 
-ruleTester.run("Invalid query type annotation with Apollo schema", rules["check-query-types"], {
+ruleTester.run("Invalid type annotation on annotateQuery", rules["check-query-types"], {
   valid: [],
   invalid: [
     {
@@ -187,6 +191,49 @@ annotateQuery<{ greeting: { __typename: "Greeting"; message: string } }, { langu
     },
   ],
 });
+
+ruleTester.run(
+  "Missing type annotation on tsql tagged template with Apollo schema",
+  rules["check-query-types"],
+  {
+    valid: [],
+    invalid: [
+      {
+        options: ruleOptions,
+        code: `
+tgql\`
+  query GetGreeting($language: String!) {
+    greeting(language: $language) {
+      __typename
+      message
+    }
+  }
+\`;
+`,
+        output: `
+tgql<{ greeting: { __typename: "Greeting"; message: string } }, { language: string }>\`
+  query GetGreeting($language: String!) {
+    greeting(language: $language) {
+      __typename
+      message
+    }
+  }
+\`;
+`,
+        errors: [
+          {
+            type: TSESTree.AST_NODE_TYPES.Identifier,
+            messageId: "missingQueryType",
+            line: 2,
+            column: 1,
+            endLine: 2,
+            endColumn: 5,
+          },
+        ],
+      },
+    ],
+  },
+);
 
 ruleTester.run(
   "Missing query type annotation with CaregiverGraphQL schema",

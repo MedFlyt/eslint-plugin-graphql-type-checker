@@ -44,7 +44,7 @@ const checkQueryTypesRuleSchema: JSONSchema4 = {
         type: "array",
         items: {
           type: "object",
-          required: ["methodName", "gqlLiteralArgumentIndex", "schemaFilePath"],
+          required: ["methodName", "schemaFilePath"],
           properties: {
             objectName: { type: "string" },
             methodName: { type: "string" },
@@ -65,7 +65,7 @@ export type RuleOptions = [
     {
       objectName?: string;
       methodName: string;
-      gqlLiteralArgumentIndex: number;
+      gqlLiteralArgumentIndex?: number;
       schemaFilePath: string;
     }>;
   },
@@ -110,6 +110,25 @@ const getOperationObjectAndMethod = (
 const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListener => {
   const listener: TSESLint.RuleListener = {
     // Easy AST viewing: https://ts-ast-viewer.com/
+    TaggedTemplateExpression(expr: TSESTree.TaggedTemplateExpression) {
+      if (expr.tag.type === "Identifier") {
+        const operationConfig = getOperationConfig(context.options, null, expr.tag.name);
+        if (operationConfig !== null) {
+          const { schemaFilePath } = operationConfig;
+          const gqlStr = getGqlString(context.report, expr);
+          if (gqlStr !== null) {
+            checkQueryTypes_Rule(
+              context,
+              schemaFilePath,
+              expr,
+              gqlStr,
+              expr.tag,
+              expr.typeParameters,
+            );
+          }
+        }
+      }
+    },
     CallExpression(callExpression) {
       try {
         const { callee, arguments: args } = callExpression;
@@ -124,7 +143,7 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
           );
 
           if (operationConfig !== null) {
-            const { schemaFilePath, gqlLiteralArgumentIndex } = operationConfig;
+            const { schemaFilePath, gqlLiteralArgumentIndex = 0 } = operationConfig;
             const typeAnnotation = callExpression.typeParameters;
 
             const templateArg = args[gqlLiteralArgumentIndex];
@@ -381,13 +400,17 @@ const extractPlaceholderTypeAnnotation = (
 ): TSESTree.TSTypeParameterInstantiation => {
   const annotatedExpression = [...eslintUtils.getNodes(moduleSource, moduleSource.ast)].find(
     (node): node is TSESTree.CallExpression =>
-      node.type === "CallExpression" &&
-      /* Function call */ ((node.callee.type === "Identifier" &&
-        node.callee.name === PLACEHOLDER) ||
-        /* Method call */ (node.callee.type === "MemberExpression" &&
-          node.callee.object.type === "Identifier" &&
-          node.callee.property.type === "Identifier" &&
-          node.callee.property.name === PLACEHOLDER)),
+      (node.type === "CallExpression" &&
+        /* Function call */ ((node.callee.type === "Identifier" &&
+          node.callee.name === PLACEHOLDER) ||
+          /* Method call */ (node.callee.type === "MemberExpression" &&
+            node.callee.object.type === "Identifier" &&
+            node.callee.property.type === "Identifier" &&
+            node.callee.property.name === PLACEHOLDER))) ||
+      /* Tagged template */
+      (node.type === "TaggedTemplateExpression" &&
+        node.tag.type === "Identifier" &&
+        node.tag.name === PLACEHOLDER),
   );
 
   if (!annotatedExpression) {

@@ -23,6 +23,10 @@ module.exports = {
             schemaFilePath: "src/schemas/apollo-schema.graphql",
           },
           {
+            methodName: "tgql",
+            schemaFilePath: "src/schemas/apollo-schema.graphql",
+          },
+          {
             objectName: "AgencyMemberGraphQL",
             methodName: "query",
             gqlLiteralArgumentIndex: 1,
