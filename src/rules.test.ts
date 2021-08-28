@@ -10,33 +10,37 @@ const ruleTester = new ESLintUtils.RuleTester({
 const invalidSchemaPath = "src/schemas/invalid-schema.txt";
 const ruleOptions: RuleOptions = [
   {
-    gqlOperationObjects: {
-      Apollo: {
+    gqlOperations: [
+      {
+        methodName: "annotateQuery",
+        gqlLiteralArgumentIndex: 0,
         schemaFilePath: "src/schemas/apollo-schema.graphql",
-        operationMethodName: "useQuery",
-        gqlLiteralArgumentIndex: 0,
       },
-      AgencyMemberGraphQL: {
+      {
+        objectName: "AgencyMemberGraphQL",
+        methodName: "query",
+        gqlLiteralArgumentIndex: 1,
         schemaFilePath: "src/schemas/agency-member-schema.graphql",
-        operationMethodName: "query",
-        gqlLiteralArgumentIndex: 1,
       },
-      CaregiverGraphQL: {
+      {
+        objectName: "CaregiverGraphQL",
+        methodName: "query",
+        gqlLiteralArgumentIndex: 1,
         schemaFilePath: "src/schemas/caregiver-schema.graphql",
-        operationMethodName: "query",
-        gqlLiteralArgumentIndex: 1,
       },
-      NonexistentSchemaGraphQL: {
+      {
+        objectName: "NonexistentSchemaGraphQL",
+        methodName: "query",
+        gqlLiteralArgumentIndex: 0,
         schemaFilePath: "this/schemas/file/does/not/exist.graphql",
-        operationMethodName: "query",
-        gqlLiteralArgumentIndex: 0,
       },
-      InvalidSchemaGraphQL: {
-        schemaFilePath: invalidSchemaPath,
-        operationMethodName: "query",
+      {
+        objectName: "InvalidSchemaGraphQL",
+        methodName: "query",
         gqlLiteralArgumentIndex: 0,
+        schemaFilePath: "src/schemas/invalid-schema.txt",
       },
-    },
+    ],
   },
 ];
 
@@ -48,11 +52,11 @@ ruleTester.run("Nonexistent schema file", rules["check-query-types"], {
       code: "NonexistentSchemaGraphQL.query(gql``);",
       errors: [
         {
-          type: TSESTree.AST_NODE_TYPES.MemberExpression,
+          type: TSESTree.AST_NODE_TYPES.Identifier,
           messageId: "unreadableSchemaFile",
           // We don't test data as data.errorMessage may be platform specific.
           line: 1,
-          column: 1,
+          column: 26,
           endLine: 1,
           endColumn: 31,
         },
@@ -69,7 +73,7 @@ ruleTester.run("Invalid schema file", rules["check-query-types"], {
       code: "InvalidSchemaGraphQL.query(gql``);",
       errors: [
         {
-          type: TSESTree.AST_NODE_TYPES.MemberExpression,
+          type: TSESTree.AST_NODE_TYPES.Identifier,
           messageId: "invalidGqlSchema",
           data: {
             schemaFilePath: path.resolve(invalidSchemaPath),
@@ -81,7 +85,7 @@ GraphQL request:1:10
 2 |`,
           },
           line: 1,
-          column: 1,
+          column: 22,
           endLine: 1,
           endColumn: 27,
         },
@@ -95,16 +99,16 @@ ruleTester.run("Parse error in GraphQL template literal string", rules["check-qu
   invalid: [
     {
       options: ruleOptions,
-      code: "Apollo.useQuery(gql`not a graphql document`, {});",
+      code: "annotateQuery(gql`not a graphql document`, {});",
       errors: [
         {
-          type: TSESTree.AST_NODE_TYPES.MemberExpression,
+          type: TSESTree.AST_NODE_TYPES.Identifier,
           messageId: "gqlLiteralParseError",
           data: { errorMessage: 'Syntax Error: Unexpected Name "not".' },
           line: 1,
           column: 1,
           endLine: 1,
-          endColumn: 16,
+          endColumn: 14,
         },
       ],
     },
@@ -116,10 +120,10 @@ ruleTester.run("Validation error in GraphQL template literal string", rules["che
   invalid: [
     {
       options: ruleOptions,
-      code: "Apollo.useQuery(gql`query {nonexistent_field}`, {});",
+      code: "annotateQuery(gql`query {nonexistent_field}`, {});",
       errors: [
         {
-          type: TSESTree.AST_NODE_TYPES.MemberExpression,
+          type: TSESTree.AST_NODE_TYPES.Identifier,
           messageId: "invalidGqlLiteral",
           data: {
             errorMessage: `Cannot query field "nonexistent_field" on type "Query".
@@ -132,7 +136,7 @@ GraphQL request:1:8
           line: 1,
           column: 1,
           endLine: 1,
-          endColumn: 16,
+          endColumn: 14,
         },
       ],
     },
@@ -145,7 +149,7 @@ ruleTester.run("Invalid query type annotation with Apollo schema", rules["check-
     {
       options: ruleOptions,
       code: `
-Apollo.useQuery<{}, {}>(
+annotateQuery<{}, {}>(
   gql\`
     query GetGreeting($language: String!) {
       greeting(language: $language) {
@@ -158,7 +162,7 @@ Apollo.useQuery<{}, {}>(
 );
 `,
       output: `
-Apollo.useQuery<{ greeting: { __typename: "Greeting"; message: string } }, { language: string }>(
+annotateQuery<{ greeting: { __typename: "Greeting"; message: string } }, { language: string }>(
   gql\`
     query GetGreeting($language: String!) {
       greeting(language: $language) {
@@ -175,9 +179,9 @@ Apollo.useQuery<{ greeting: { __typename: "Greeting"; message: string } }, { lan
           type: TSESTree.AST_NODE_TYPES.TSTypeParameterInstantiation,
           messageId: "invalidQueryType",
           line: 2,
-          column: 16,
+          column: 14,
           endLine: 2,
-          endColumn: 24,
+          endColumn: 22,
         },
       ],
     },
@@ -242,10 +246,10 @@ await CaregiverGraphQL.query<
 `,
         errors: [
           {
-            type: TSESTree.AST_NODE_TYPES.MemberExpression,
+            type: TSESTree.AST_NODE_TYPES.Identifier,
             messageId: "missingQueryType",
             line: 2,
-            column: 7,
+            column: 24,
             endLine: 2,
             endColumn: 29,
           },
@@ -292,10 +296,10 @@ await CaregiverGraphQL.query<
 `,
         errors: [
           {
-            type: TSESTree.AST_NODE_TYPES.MemberExpression,
+            type: TSESTree.AST_NODE_TYPES.Identifier,
             messageId: "missingQueryType",
             line: 2,
-            column: 7,
+            column: 24,
             endLine: 2,
             endColumn: 29,
           },

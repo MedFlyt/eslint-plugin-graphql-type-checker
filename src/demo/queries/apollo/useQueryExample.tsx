@@ -1,8 +1,9 @@
-import Apollo, { gql } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 import React from "react";
 
-function App() {
-  const { data } = Apollo.useQuery<
+export const App = () => {
+  // useQuery is annotated by the plugin.
+  const { data } = useQuery<
     { greeting: { __typename: "Greeting"; message: string } },
     { language: string }
   >(
@@ -15,11 +16,10 @@ function App() {
       }
     `,
     {
-      variables: { language: "english" },
+      variables: { language: "english" }, // Strongly-typed variables
     },
   );
 
+  // inferred type for data: { greeting: { __typename: "Greeting", message: string } } | undefined
   return <div className="App">{data && data.greeting.message}!</div>;
-}
-
-export default App;
+};
