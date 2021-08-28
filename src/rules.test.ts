@@ -10,38 +10,45 @@ const ruleTester = new ESLintUtils.RuleTester({
 const invalidSchemaPath = "src/schemas/invalid-schema.txt";
 const ruleOptions: RuleOptions = [
   {
-    gqlOperations: [
+    annotationTargets: [
       {
-        methodName: "annotateQuery",
-        gqlLiteralArgumentIndex: 0,
+        function: { name: "annotateQuery", gqlLiteralArgumentIndex: 0 },
         schemaFilePath: "src/schemas/apollo-schema.graphql",
       },
       {
-        methodName: "tgql",
+        taggedTemplate: "tgql",
         schemaFilePath: "src/schemas/apollo-schema.graphql",
       },
       {
-        objectName: "AgencyMemberGraphQL",
-        methodName: "query",
-        gqlLiteralArgumentIndex: 1,
+        method: {
+          objectName: "AgencyMemberGraphQL",
+          methodName: "query",
+          gqlLiteralArgumentIndex: 1,
+        },
         schemaFilePath: "src/schemas/agency-member-schema.graphql",
       },
       {
-        objectName: "CaregiverGraphQL",
-        methodName: "query",
-        gqlLiteralArgumentIndex: 1,
+        method: {
+          objectName: "CaregiverGraphQL",
+          methodName: "query",
+          gqlLiteralArgumentIndex: 1,
+        },
         schemaFilePath: "src/schemas/caregiver-schema.graphql",
       },
       {
-        objectName: "NonexistentSchemaGraphQL",
-        methodName: "query",
-        gqlLiteralArgumentIndex: 0,
+        method: {
+          objectName: "NonexistentSchemaGraphQL",
+          methodName: "query",
+          gqlLiteralArgumentIndex: 0,
+        },
         schemaFilePath: "this/schemas/file/does/not/exist.graphql",
       },
       {
-        objectName: "InvalidSchemaGraphQL",
-        methodName: "query",
-        gqlLiteralArgumentIndex: 0,
+        method: {
+          objectName: "InvalidSchemaGraphQL",
+          methodName: "query",
+          gqlLiteralArgumentIndex: 0,
+        },
         schemaFilePath: "src/schemas/invalid-schema.txt",
       },
     ],

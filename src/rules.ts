@@ -12,16 +12,16 @@ import * as utils from "./utils";
 import type { JSONSchema4 } from "json-schema";
 
 const messages = {
-  noInterpolation: "Interpolation not allowed in gql template literals",
-  gqlLiteralParseError: "Parse error in GraphQL template literal:\n\n{{errorMessage}}",
+  noInterpolation: "Interpolation not allowed in gql tagged templates",
+  gqlLiteralParseError: "Parse error in gql tagged template:\n\n{{errorMessage}}",
   unreadableSchemaFile:
     "Cannot read GraphQL schema file at '{{schemaFilePath}}':\n\n{{errorMessage}}",
   invalidGqlSchema: "Invalid GraphQL schema at '{{schemaFilePath}}':\n\n{{errorMessage}}",
-  invalidGqlLiteral: "Invalid GraphQL document in template literal:\n\n{{errorMessage}}",
-  noMultipleDefinitions: "Only a single definition is allowed in gql template literals",
-  onlyQueryOperations: "Only query operations are allowed in gql template literals",
-  missingQueryType: "Operation should have a type annotation that matches the GraphQL query type",
-  invalidQueryType: "Operation type annotation does not match GraphQL query type",
+  invalidGqlLiteral: "Invalid GraphQL document in tagged template:\n\n{{errorMessage}}",
+  noMultipleDefinitions: "Only a single definition is allowed in gql  tagged templates",
+  onlyQueryOperations: "Only 'query' operations are allowed in gql tagged templates",
+  missingQueryType: "Target should have a type annotation that matches the GraphQL query type",
+  invalidQueryType: "Target type annotation does not match GraphQL query type",
   unhandledPluginException:
     "Unhandled exception in graphql-type-checker plugin, probably due to a bug in the plugin. " +
     "Note that the query type annotations may be incorrect.\n\n{{errorMessage}}",
@@ -38,19 +38,45 @@ const checkQueryTypesRuleSchema: JSONSchema4 = {
   maxItems: 1,
   items: {
     type: "object",
-    required: ["gqlOperations"],
+    required: ["annotationTargets"],
     properties: {
-      gqlOperations: {
+      annotationTargets: {
         type: "array",
         items: {
           type: "object",
-          required: ["methodName", "schemaFilePath"],
           properties: {
-            objectName: { type: "string" },
-            methodName: { type: "string" },
+            function: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                gqlLiteralArgumentIndex: { type: "number", minimum: 0 },
+              },
+              required: ["name", "gqlLiteralArgumentIndex"],
+            },
+            method: {
+              type: "object",
+              properties: {
+                objectName: { type: "string" },
+                methodName: { type: "string" },
+                gqlLiteralArgumentIndex: { type: "number", minimum: 0 },
+              },
+              required: ["objectName", "methodName", "gqlLiteralArgumentIndex"],
+            },
+            taggedTemplate: { type: "string" },
             schemaFilePath: { type: "string" },
-            gqlLiteralArgumentIndex: { type: "number", minimum: 0 },
           },
+          oneOf: [
+            {
+              required: ["function"],
+            },
+            {
+              required: ["method"],
+            },
+            {
+              required: ["taggedTemplate"],
+            },
+          ],
+          required: ["schemaFilePath"],
           additionalProperties: false,
         },
       },
@@ -59,62 +85,76 @@ const checkQueryTypesRuleSchema: JSONSchema4 = {
   },
 };
 
+type FunctionTarget = { function: { name: string; gqlLiteralArgumentIndex: number } };
+type MethodTarget = {
+  method: { objectName: string; methodName: string; gqlLiteralArgumentIndex: number };
+};
+type TaggedTemplateTarget = { taggedTemplate: string };
 export type RuleOptions = [
   {
-    gqlOperations: Array<// TODO: Name gqlOperationObjects makes no sense anymore
-    {
-      objectName?: string;
-      methodName: string;
-      gqlLiteralArgumentIndex?: number;
-      schemaFilePath: string;
-    }>;
+    annotationTargets: Array<
+      (FunctionTarget | MethodTarget | TaggedTemplateTarget) & {
+        schemaFilePath: string;
+      }
+    >;
   },
 ];
 
-const getOperationConfig = (
-  ruleOptions: RuleOptions,
-  objectName: string | null,
-  methodname: string,
-) => {
-  const matchingOperations = ruleOptions[0].gqlOperations.filter(
-    (operation) =>
-      (objectName === null ||
-        operation.objectName === undefined ||
-        operation.objectName === objectName) &&
-      operation.methodName === methodname,
+const getTaggedTemplateConfig = (ruleOptions: RuleOptions, tagName: string) => {
+  const matchingTargets = ruleOptions[0].annotationTargets.filter(
+    (target) => "taggedTemplate" in target && target.taggedTemplate === tagName,
   );
-  if (matchingOperations.length === 0) {
+
+  if (matchingTargets.length === 0) {
     return null;
   }
-  return matchingOperations[0];
+  return matchingTargets[0];
+  // TODO: Validate that tagNames are unique. (can't throw or report here, or we'll have errors on every method call).
+};
+
+const getFunctionTargetConfig = (ruleOptions: RuleOptions, functionName: string) => {
+  const matchingTargets = ruleOptions[0].annotationTargets.filter(
+    (target): target is FunctionTarget & { schemaFilePath: string } =>
+      "function" in target && target.function.name === functionName,
+  );
+
+  if (matchingTargets.length === 0) {
+    return null;
+  }
+  return matchingTargets[0];
   // TODO: Validate that objectName/methodName pairs are unique. (can't throw or report here, or we'll have errors on
   // every method call).
 };
 
-const getOperationObjectAndMethod = (
-  callee: TSESTree.LeftHandSideExpression,
-): { operationObject: TSESTree.Identifier | null; operationMethod: TSESTree.Identifier } | null => {
-  if (
-    callee.type === "MemberExpression" &&
-    callee.object.type === "Identifier" &&
-    callee.property.type === "Identifier"
-  ) {
-    return { operationObject: callee.object, operationMethod: callee.property };
-  } else if (callee.type === "Identifier") {
-    return { operationObject: null, operationMethod: callee };
-  } else {
+const getMethodTargetConfig = (
+  ruleOptions: RuleOptions,
+  objectName: string,
+  methodName: string,
+) => {
+  const matchingTargets = ruleOptions[0].annotationTargets.filter(
+    (target): target is MethodTarget & { schemaFilePath: string } =>
+      "method" in target &&
+      target.method.objectName === objectName &&
+      target.method.methodName === methodName,
+  );
+
+  if (matchingTargets.length === 0) {
     return null;
   }
+  return matchingTargets[0];
+  // TODO: Validate that objectName/methodName pairs are unique. (can't throw or report here, or we'll have errors on
+  // every method call).
 };
 
 const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListener => {
   const listener: TSESLint.RuleListener = {
     // Easy AST viewing: https://ts-ast-viewer.com/
+
     TaggedTemplateExpression(expr: TSESTree.TaggedTemplateExpression) {
       if (expr.tag.type === "Identifier") {
-        const operationConfig = getOperationConfig(context.options, null, expr.tag.name);
-        if (operationConfig !== null) {
-          const { schemaFilePath } = operationConfig;
+        const targetConfig = getTaggedTemplateConfig(context.options, expr.tag.name);
+        if (targetConfig !== null) {
+          const { schemaFilePath } = targetConfig;
           const gqlStr = getGqlString(context.report, expr);
           if (gqlStr !== null) {
             checkQueryTypes_Rule(
@@ -129,46 +169,56 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
         }
       }
     },
+
     CallExpression(callExpression) {
       try {
         const { callee, arguments: args } = callExpression;
-        const objectAndMethod = getOperationObjectAndMethod(callee);
 
-        if (objectAndMethod !== null) {
-          const { operationObject, operationMethod } = objectAndMethod;
-          const operationConfig = getOperationConfig(
-            context.options,
-            operationObject?.name ?? null,
-            operationMethod.name,
-          );
+        const targetFunctionAndConfig =
+          callee.type === "Identifier"
+            ? ([callee, getFunctionTargetConfig(context.options, callee.name)] as const)
+            : callee.type === "MemberExpression" &&
+              callee.object.type === "Identifier" &&
+              callee.property.type === "Identifier"
+            ? ([
+                callee.property,
+                getMethodTargetConfig(context.options, callee.object.name, callee.property.name),
+              ] as const)
+            : null;
 
-          if (operationConfig !== null) {
-            const { schemaFilePath, gqlLiteralArgumentIndex = 0 } = operationConfig;
-            const typeAnnotation = callExpression.typeParameters;
+        if (targetFunctionAndConfig !== null && targetFunctionAndConfig[1] !== null) {
+          const [targetFunction, targetConfig] = targetFunctionAndConfig;
 
-            const templateArg = args[gqlLiteralArgumentIndex];
+          const gqlLiteralArgumentIndex =
+            "function" in targetConfig
+              ? targetConfig.function.gqlLiteralArgumentIndex
+              : targetConfig.method.gqlLiteralArgumentIndex;
+          const { schemaFilePath } = targetConfig;
 
-            // Don't error if the template argument does not exist, as the method might be called with a
-            // variable instead, or have an overload with fewer parameters, so just don't trigger the rule.
-            const taggedGqlTemplate =
-              templateArg?.type === "TaggedTemplateExpression" &&
-              templateArg?.tag?.type === "Identifier" &&
-              templateArg?.tag?.name === "gql"
-                ? templateArg
-                : null;
+          const typeAnnotation = callExpression.typeParameters;
 
-            if (taggedGqlTemplate !== null) {
-              const gqlStr = getGqlString(context.report, taggedGqlTemplate);
-              if (gqlStr !== null) {
-                checkQueryTypes_Rule(
-                  context,
-                  schemaFilePath,
-                  taggedGqlTemplate,
-                  gqlStr,
-                  operationMethod,
-                  typeAnnotation,
-                );
-              }
+          const templateArg = args[gqlLiteralArgumentIndex];
+
+          // Don't error if the template argument does not exist, as the method might be called with a
+          // variable instead, or have an overload with fewer parameters, so just don't trigger the rule.
+          const taggedGqlTemplate =
+            templateArg?.type === "TaggedTemplateExpression" &&
+            templateArg?.tag?.type === "Identifier" &&
+            templateArg?.tag?.name === "gql"
+              ? templateArg
+              : null;
+
+          if (taggedGqlTemplate !== null) {
+            const gqlStr = getGqlString(context.report, taggedGqlTemplate);
+            if (gqlStr !== null) {
+              checkQueryTypes_Rule(
+                context,
+                schemaFilePath,
+                taggedGqlTemplate,
+                gqlStr,
+                targetFunction,
+                typeAnnotation,
+              );
             }
           }
         }
@@ -188,14 +238,14 @@ const checkQueryTypes_Rule = (
   schemaFilePath: string,
   taggedGqlTemplate: TSESTree.TaggedTemplateExpression,
   gqlStr: string,
-  operationMethod: TSESTree.Identifier,
+  annotationTarget: TSESTree.Identifier,
   typeAnnotation?: TSESTree.TSTypeParameterInstantiation,
 ) => {
   const absoluteSchemaFilePath = path.resolve(schemaFilePath);
   const schemaFileContentsResult = readSchema(absoluteSchemaFilePath);
   if (utils.isError(schemaFileContentsResult)) {
     context.report({
-      node: operationMethod, // Don't report on gql literal because it will squiggle over gql plugin errors.
+      node: annotationTarget, // Don't report on gql literal because it will squiggle over gql plugin errors.
       messageId: "unreadableSchemaFile",
       data: {
         schemaFilePath: absoluteSchemaFilePath,
@@ -209,7 +259,7 @@ const checkQueryTypes_Rule = (
     if (utils.isError(schemaResult)) {
       context.report({
         // Don't report on gql literal because it will squiggle over gql plugin errors.
-        node: operationMethod,
+        node: annotationTarget,
         messageId: "invalidGqlSchema",
         data: { schemaFilePath: absoluteSchemaFilePath, errorMessage: schemaResult.error },
       });
@@ -219,7 +269,7 @@ const checkQueryTypes_Rule = (
         const res = utils.catchExceptions(graphql.parse)(gqlStr);
         if (utils.isError(res)) {
           context.report({
-            node: operationMethod,
+            node: annotationTarget,
             messageId: "gqlLiteralParseError",
             data: { errorMessage: res.error.message },
           });
@@ -228,7 +278,7 @@ const checkQueryTypes_Rule = (
 
           const validationReportDescriptor = validateGraphQLDoc(
             schema,
-            operationMethod,
+            annotationTarget,
             taggedGqlTemplate,
             gqlOperationDocument,
           );
@@ -262,13 +312,13 @@ const checkQueryTypes_Rule = (
                   }
                 : {
                     messageId: "missingQueryType",
-                    node: operationMethod,
-                    inferredAnnotationRange: [operationMethod.range[1], operationMethod.range[1]],
+                    node: annotationTarget,
+                    inferredAnnotationRange: [annotationTarget.range[1], annotationTarget.range[1]],
                   };
 
               const typeStr = prettifyAnnotationInPlace(
                 context,
-                operationMethod,
+                annotationTarget,
                 inferredAnnotationRange,
                 inferredTypeAnnotationStr,
               );
@@ -438,32 +488,32 @@ const compareTypeAnnotations = (
 // the right indentation when it is applied as a quick fix.
 const prettifyAnnotationInPlace = (
   context: RuleContext,
-  operationMethod: TSESTree.Identifier,
+  annotationTarget: TSESTree.Identifier,
   annotationRange: [number, number],
   annotation: string,
 ) => {
-  // To be able to extract the anotation, we replace the callee property (i.e. the operation method name) with use
-  // a same-length string consisting of '𐙀' characters from the unicode Linear A block. This will fail if the module
-  // already contains a method call on the gqlOperationObject consisting of the right amount of '𐙀' characters, but in that
-  // case the module author has bigger problems than a plugin exception.
+  // To be able to extract the anotation, we replace the annotation-target identifier with a same-length placeholder
+  // string that consists of '𐙀' characters from the unicode Linear A block. Note that this may fail if the module
+  // already contains identifiers that consist entirely of '𐙀' characters, but in that case the module author has bigger
+  // problems than a plugin exception.
   //
-  // Needs to have the same length as operationMethod for optimal layout.
-  const operationMethodLength = operationMethod.range[1] - operationMethod.range[0];
-  const PLACEHOLDER = "𐙀".repeat(operationMethodLength); //https://unicode-table.com/en/10640/
+  // Needs to have the same length as annotationTarget for optimal layout.
+  const annotationTargetLength = annotationTarget.range[1] - annotationTarget.range[0];
+  const PLACEHOLDER = "𐙀".repeat(annotationTargetLength); //https://unicode-table.com/en/10640/
 
   // Replace the callee property in the module source with the placeholder:
   const placeholderModuleStr =
-    context.getSourceCode().text.slice(0, operationMethod.range[0]) +
+    context.getSourceCode().text.slice(0, annotationTarget.range[0]) +
     PLACEHOLDER +
-    context.getSourceCode().text.slice(operationMethod.range[1]);
+    context.getSourceCode().text.slice(annotationTarget.range[1]);
 
   // Insert inferred type annotation in the module source with the placeholder property name, taking into account
-  // that the unicode PLACEHOLDER string length is 2 * operationMethodLength. (Prettier treats it as having the same
-  // width as operationMethod though.)
+  // that the unicode PLACEHOLDER string length is 2 * annotationTargetLength. (Prettier correctly treats it as having
+  // the same width as annotationTarget.)
   const annotatedPlaceholderModuleStr =
-    placeholderModuleStr.slice(0, annotationRange[0] + operationMethodLength) + // NOTE: PLACEHOLDER is twice as long
+    placeholderModuleStr.slice(0, annotationRange[0] + annotationTargetLength) + // NOTE: PLACEHOLDER is twice as long
     annotation +
-    placeholderModuleStr.slice(annotationRange[1] + operationMethodLength); // NOTE: PLACEHOLDER is twice as long
+    placeholderModuleStr.slice(annotationRange[1] + annotationTargetLength); // NOTE: PLACEHOLDER is twice as long
 
   const prettierConfig = prettier.resolveConfig.sync(context.getFilename());
 
@@ -509,7 +559,7 @@ export const rules = {
       type: "problem",
       schema: checkQueryTypesRuleSchema,
     },
-    defaultOptions: [{ gqlOperations: [] }],
+    defaultOptions: [{ annotationTargets: [] }],
     create: checkQueryTypes_RuleListener,
   }),
 };
