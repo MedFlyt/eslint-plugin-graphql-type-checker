@@ -47,6 +47,11 @@ const genArgumentsType_OperationDefinition = (
   operationDef: graphql.OperationDefinitionNode,
 ): string => {
   const variableDefinitions = operationDef.variableDefinitions ?? [];
+
+  if (variableDefinitions.length === 0) {
+    return `Record<PropertyKey, never>`;
+  }
+
   const variableDefinitionsStr = variableDefinitions
     .map(genArgumentsType_VariableDefinition(schema))
     .join(", ");

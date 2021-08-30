@@ -254,3 +254,53 @@ await CaregiverGraphQL.query<
     ],
   },
 );
+
+ruleTester.run(
+    "Missing query type annotation with CaregiverGraphQL schema without variables",
+    rules["check-query-types"],
+    {
+        valid: [],
+        invalid: [
+            {
+                options: ruleOptions,
+                code: `
+await CaregiverGraphQL.query(
+    conn,
+    gql\`
+        query {
+            visibleTrainingCenterBundles(bundle_id: { eq: 1 }) {
+                caregiver_id
+            }
+        }
+    \`
+);
+`,
+                output: `
+await CaregiverGraphQL.query<
+  { visibleTrainingCenterBundles: ReadonlyArray<{ caregiver_id: CaregiverId }> },
+  Record<PropertyKey, never>
+>(
+    conn,
+    gql\`
+        query {
+            visibleTrainingCenterBundles(bundle_id: { eq: 1 }) {
+                caregiver_id
+            }
+        }
+    \`
+);
+`,
+                errors: [
+                    {
+                        type: TSESTree.AST_NODE_TYPES.MemberExpression,
+                        messageId: "missingQueryType",
+                        line: 2,
+                        column: 7,
+                        endLine: 2,
+                        endColumn: 29,
+                    },
+                ],
+            },
+        ],
+    },
+);
