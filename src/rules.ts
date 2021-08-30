@@ -47,22 +47,22 @@ const checkQueryTypesRuleSchema: JSONSchema4 = {
           properties: {
             function: {
               type: "object",
-              properties: {
-                name: { type: "string" },
-                gqlLiteralArgumentIndex: { type: "number", minimum: 0 },
-              },
-              required: ["name", "gqlLiteralArgumentIndex"],
+              properties: { name: { type: "string" } },
+              required: ["name"],
             },
             method: {
               type: "object",
               properties: {
                 objectName: { type: "string" },
                 methodName: { type: "string" },
-                gqlLiteralArgumentIndex: { type: "number", minimum: 0 },
               },
-              required: ["objectName", "methodName", "gqlLiteralArgumentIndex"],
+              required: ["objectName", "methodName"],
             },
-            taggedTemplate: { type: "string" },
+            taggedTemplate: {
+              type: "object",
+              properties: { name: { type: "string" } },
+              required: ["name"],
+            },
             schemaFilePath: { type: "string" },
           },
           oneOf: [
@@ -85,11 +85,11 @@ const checkQueryTypesRuleSchema: JSONSchema4 = {
   },
 };
 
-type FunctionTarget = { function: { name: string; gqlLiteralArgumentIndex: number } };
+type FunctionTarget = { function: { name: string } };
 type MethodTarget = {
-  method: { objectName: string; methodName: string; gqlLiteralArgumentIndex: number };
+  method: { objectName: string; methodName: string };
 };
-type TaggedTemplateTarget = { taggedTemplate: string };
+type TaggedTemplateTarget = { taggedTemplate: { name: string } };
 export type RuleOptions = [
   {
     annotationTargets: Array<
@@ -102,7 +102,7 @@ export type RuleOptions = [
 
 const getTaggedTemplateConfig = (ruleOptions: RuleOptions, tagName: string) => {
   const matchingTargets = ruleOptions[0].annotationTargets.filter(
-    (target) => "taggedTemplate" in target && target.taggedTemplate === tagName,
+    (target) => "taggedTemplate" in target && target.taggedTemplate.name === tagName,
   );
 
   if (matchingTargets.length === 0) {
@@ -189,26 +189,21 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
         if (targetFunctionAndConfig !== null && targetFunctionAndConfig[1] !== null) {
           const [targetFunction, targetConfig] = targetFunctionAndConfig;
 
-          const gqlLiteralArgumentIndex =
-            "function" in targetConfig
-              ? targetConfig.function.gqlLiteralArgumentIndex
-              : targetConfig.method.gqlLiteralArgumentIndex;
           const { schemaFilePath } = targetConfig;
 
           const typeAnnotation = callExpression.typeParameters;
 
-          const templateArg = args[gqlLiteralArgumentIndex];
+          // Take the first tagged-template argument with tag 'gql' as our taggedGqlTemplate.
+          const taggedGqlTemplate = args.find(
+            (arg): arg is TSESTree.TaggedTemplateExpression =>
+              arg.type === "TaggedTemplateExpression" &&
+              arg.tag.type === "Identifier" &&
+              arg.tag.name === "gql",
+          );
 
-          // Don't error if the template argument does not exist, as the method might be called with a
-          // variable instead, or have an overload with fewer parameters, so just don't trigger the rule.
-          const taggedGqlTemplate =
-            templateArg?.type === "TaggedTemplateExpression" &&
-            templateArg?.tag?.type === "Identifier" &&
-            templateArg?.tag?.name === "gql"
-              ? templateArg
-              : null;
-
-          if (taggedGqlTemplate !== null) {
+          // We don't error if the template argument does not exist, since the function may have been called with a
+          // variable instead, or have an overload with fewer parameters. Instead, we just don't trigger the rule.
+          if (taggedGqlTemplate !== undefined) {
             const gqlStr = getGqlString(context.report, taggedGqlTemplate);
             if (gqlStr !== null) {
               checkQueryTypes_Rule(

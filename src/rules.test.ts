@@ -12,18 +12,17 @@ const ruleOptions: RuleOptions = [
   {
     annotationTargets: [
       {
-        function: { name: "annotateQuery", gqlLiteralArgumentIndex: 0 },
+        function: { name: "annotateQuery" },
         schemaFilePath: "src/schemas/apollo-schema.graphql",
       },
       {
-        taggedTemplate: "tgql",
+        taggedTemplate: { name: "tgql" },
         schemaFilePath: "src/schemas/apollo-schema.graphql",
       },
       {
         method: {
           objectName: "AgencyMemberGraphQL",
           methodName: "query",
-          gqlLiteralArgumentIndex: 1,
         },
         schemaFilePath: "src/schemas/agency-member-schema.graphql",
       },
@@ -31,7 +30,6 @@ const ruleOptions: RuleOptions = [
         method: {
           objectName: "CaregiverGraphQL",
           methodName: "query",
-          gqlLiteralArgumentIndex: 1,
         },
         schemaFilePath: "src/schemas/caregiver-schema.graphql",
       },
@@ -39,7 +37,6 @@ const ruleOptions: RuleOptions = [
         method: {
           objectName: "NonexistentSchemaGraphQL",
           methodName: "query",
-          gqlLiteralArgumentIndex: 0,
         },
         schemaFilePath: "this/schemas/file/does/not/exist.graphql",
       },
@@ -47,7 +44,6 @@ const ruleOptions: RuleOptions = [
         method: {
           objectName: "InvalidSchemaGraphQL",
           methodName: "query",
-          gqlLiteralArgumentIndex: 0,
         },
         schemaFilePath: "src/schemas/invalid-schema.txt",
       },

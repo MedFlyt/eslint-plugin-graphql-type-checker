@@ -13,22 +13,21 @@ module.exports = {
           // this. We also cannot move this file to the root, since it needs to be in the directory with the
           // package.json containing the "file:../.." dependency, and we cannot have that in the root package.
           {
-            function: { name: "useQuery", gqlLiteralArgumentIndex: 0 },
+            function: { name: "useQuery" },
             schemaFilePath: "src/schemas/apollo-schema.graphql",
           },
           {
-            function: { name: "annotateQuery", gqlLiteralArgumentIndex: 0 },
+            function: { name: "annotateQuery" },
             schemaFilePath: "src/schemas/apollo-schema.graphql",
           },
           {
-            taggedTemplate: "tgql",
+            taggedTemplate: { name: "tgql" },
             schemaFilePath: "src/schemas/apollo-schema.graphql",
           },
           {
             method: {
               objectName: "AgencyMemberGraphQL",
               methodName: "query",
-              gqlLiteralArgumentIndex: 1,
             },
             schemaFilePath: "src/schemas/agency-member-schema.graphql",
           },
@@ -36,7 +35,6 @@ module.exports = {
             method: {
               objectName: "CaregiverGraphQL",
               methodName: "query",
-              gqlLiteralArgumentIndex: 1,
             },
             schemaFilePath: "src/schemas/caregiver-schema.graphql",
           },
@@ -44,7 +42,6 @@ module.exports = {
             method: {
               objectName: "NonexistentSchemaGraphQL",
               methodName: "query",
-              gqlLiteralArgumentIndex: 0,
             },
             schemaFilePath: "this/schemas/file/does/not/exist.graphql",
           },
@@ -52,7 +49,6 @@ module.exports = {
             method: {
               objectName: "InvalidSchemaGraphQL",
               methodName: "query",
-              gqlLiteralArgumentIndex: 0,
             },
             schemaFilePath: "src/schemas/invalid-schema.txt",
           },
