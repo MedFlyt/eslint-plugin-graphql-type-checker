@@ -1,29 +1,29 @@
-import * as graphql from "graphql";
-import gql from "graphql-tag";
+import * as graphql from 'graphql'
+import gql from 'graphql-tag'
 
-type AgencyMemberId = string;
+type AgencyMemberId = string
 
 type AgencyMemberId_Filter = {
-  eq?: AgencyMemberId;
-  in: [AgencyMemberId];
-};
+  eq?: AgencyMemberId
+  in: [AgencyMemberId]
+}
 
 const AgencyMemberGraphQL = {
   query<Res, Args>(_conf: any, _gqlQuery: graphql.DocumentNode, _args: Args): Promise<Res> {
-    return {} as any;
+    return {} as any
   },
-};
+}
 
-const conn = undefined;
+const conn = undefined
 
 export const test = async () =>
   AgencyMemberGraphQL.query<
     {
       agencyMembers: ReadonlyArray<{
-        id: AgencyMemberId;
-        firstName: string;
-        agency: { website: string };
-      }>;
+        id: AgencyMemberId
+        firstName: string
+        agency: { website: string }
+      }>
     },
     { memberName: string; id: AgencyMemberId_Filter | null }
   >(
@@ -40,7 +40,7 @@ export const test = async () =>
       }
     `,
     {
-      memberName: "Bob Ross",
-      id: { in: ["42"] },
+      memberName: 'Bob Ross',
+      id: { in: ['42'] },
     },
-  );
+  )

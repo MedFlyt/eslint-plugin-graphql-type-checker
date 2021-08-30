@@ -1,18 +1,18 @@
-"use strict";
+'use strict'
 
 // @ts-check
 /** @type {import('@jest/types').Config.InitialOptions} */
 module.exports = {
   globals: {
-    "ts-jest": {
+    'ts-jest': {
       isolatedModules: true,
     },
   },
-  testEnvironment: "node",
+  testEnvironment: 'node',
   transform: {
-    "^.+\\.tsx?$": "ts-jest",
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  testRegex: "./src/.+\\.test\\.ts$",
+  testRegex: './src/.+\\.test\\.ts$',
   collectCoverage: false,
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
-};
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+}

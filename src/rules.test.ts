@@ -1,66 +1,66 @@
-import { ESLintUtils, TSESTree } from "@typescript-eslint/experimental-utils";
-import * as path from "path";
+import { ESLintUtils, TSESTree } from '@typescript-eslint/experimental-utils'
+import * as path from 'path'
 
-import { RuleOptions, rules } from "./rules";
+import { RuleOptions, rules } from './rules'
 
 const ruleTester = new ESLintUtils.RuleTester({
-  parser: "@typescript-eslint/parser",
-});
+  parser: '@typescript-eslint/parser',
+})
 
-const invalidSchemaPath = "src/schemas/invalid-schema.txt";
+const invalidSchemaPath = 'src/schemas/invalid-schema.txt'
 const ruleOptions: RuleOptions = [
   {
     annotationTargets: [
       {
-        function: { name: "annotateQuery" },
-        schemaFilePath: "src/schemas/apollo-schema.graphql",
+        function: { name: 'annotateQuery' },
+        schemaFilePath: 'src/schemas/apollo-schema.graphql',
       },
       {
-        taggedTemplate: { name: "tgql" },
-        schemaFilePath: "src/schemas/apollo-schema.graphql",
-      },
-      {
-        method: {
-          objectName: "AgencyMemberGraphQL",
-          methodName: "query",
-        },
-        schemaFilePath: "src/schemas/agency-member-schema.graphql",
+        taggedTemplate: { name: 'tgql' },
+        schemaFilePath: 'src/schemas/apollo-schema.graphql',
       },
       {
         method: {
-          objectName: "CaregiverGraphQL",
-          methodName: "query",
+          objectName: 'AgencyMemberGraphQL',
+          methodName: 'query',
         },
-        schemaFilePath: "src/schemas/caregiver-schema.graphql",
+        schemaFilePath: 'src/schemas/agency-member-schema.graphql',
       },
       {
         method: {
-          objectName: "NonexistentSchemaGraphQL",
-          methodName: "query",
+          objectName: 'CaregiverGraphQL',
+          methodName: 'query',
         },
-        schemaFilePath: "this/schemas/file/does/not/exist.graphql",
+        schemaFilePath: 'src/schemas/caregiver-schema.graphql',
       },
       {
         method: {
-          objectName: "InvalidSchemaGraphQL",
-          methodName: "query",
+          objectName: 'NonexistentSchemaGraphQL',
+          methodName: 'query',
         },
-        schemaFilePath: "src/schemas/invalid-schema.txt",
+        schemaFilePath: 'this/schemas/file/does/not/exist.graphql',
+      },
+      {
+        method: {
+          objectName: 'InvalidSchemaGraphQL',
+          methodName: 'query',
+        },
+        schemaFilePath: 'src/schemas/invalid-schema.txt',
       },
     ],
   },
-];
+]
 
-ruleTester.run("Nonexistent schema file", rules["check-query-types"], {
+ruleTester.run('Nonexistent schema file', rules['check-query-types'], {
   valid: [],
   invalid: [
     {
       options: ruleOptions,
-      code: "NonexistentSchemaGraphQL.query(gql``);",
+      code: 'NonexistentSchemaGraphQL.query(gql``)',
       errors: [
         {
           type: TSESTree.AST_NODE_TYPES.Identifier,
-          messageId: "unreadableSchemaFile",
+          messageId: 'unreadableSchemaFile',
           // We don't test data as data.errorMessage may be platform specific.
           line: 1,
           column: 26,
@@ -70,18 +70,18 @@ ruleTester.run("Nonexistent schema file", rules["check-query-types"], {
       ],
     },
   ],
-});
+})
 
-ruleTester.run("Invalid schema file", rules["check-query-types"], {
+ruleTester.run('Invalid schema file', rules['check-query-types'], {
   valid: [],
   invalid: [
     {
       options: ruleOptions,
-      code: "InvalidSchemaGraphQL.query(gql``);",
+      code: 'InvalidSchemaGraphQL.query(gql``)',
       errors: [
         {
           type: TSESTree.AST_NODE_TYPES.Identifier,
-          messageId: "invalidGqlSchema",
+          messageId: 'invalidGqlSchema',
           data: {
             schemaFilePath: path.resolve(invalidSchemaPath),
             errorMessage: `Syntax Error: Unexpected Name "a".
@@ -99,18 +99,18 @@ GraphQL request:1:10
       ],
     },
   ],
-});
+})
 
-ruleTester.run("Parse error in GraphQL template literal string", rules["check-query-types"], {
+ruleTester.run('Parse error in GraphQL template literal string', rules['check-query-types'], {
   valid: [],
   invalid: [
     {
       options: ruleOptions,
-      code: "annotateQuery(gql`not a graphql document`, {});",
+      code: 'annotateQuery(gql`not a graphql document`, {})',
       errors: [
         {
           type: TSESTree.AST_NODE_TYPES.Identifier,
-          messageId: "gqlLiteralParseError",
+          messageId: 'gqlLiteralParseError',
           data: { errorMessage: 'Syntax Error: Unexpected Name "not".' },
           line: 1,
           column: 1,
@@ -120,18 +120,18 @@ ruleTester.run("Parse error in GraphQL template literal string", rules["check-qu
       ],
     },
   ],
-});
+})
 
-ruleTester.run("Validation error in GraphQL template literal string", rules["check-query-types"], {
+ruleTester.run('Validation error in GraphQL template literal string', rules['check-query-types'], {
   valid: [],
   invalid: [
     {
       options: ruleOptions,
-      code: "annotateQuery(gql`query {nonexistent_field}`, {});",
+      code: 'annotateQuery(gql`query {nonexistent_field}`, {})',
       errors: [
         {
           type: TSESTree.AST_NODE_TYPES.Identifier,
-          messageId: "invalidGqlLiteral",
+          messageId: 'invalidGqlLiteral',
           data: {
             errorMessage: `Cannot query field "nonexistent_field" on type "Query".
 
@@ -148,9 +148,9 @@ GraphQL request:1:8
       ],
     },
   ],
-});
+})
 
-ruleTester.run("Invalid type annotation on annotateQuery", rules["check-query-types"], {
+ruleTester.run('Invalid type annotation on annotateQuery', rules['check-query-types'], {
   valid: [],
   invalid: [
     {
@@ -166,10 +166,10 @@ annotateQuery<{}, {}>(
     }
   \`,
   args,
-);
+)
 `,
       output: `
-annotateQuery<{ greeting: { __typename: "Greeting"; message: string } }, { language: string }>(
+annotateQuery<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>(
   gql\`
     query GetGreeting($language: String!) {
       greeting(language: $language) {
@@ -179,12 +179,12 @@ annotateQuery<{ greeting: { __typename: "Greeting"; message: string } }, { langu
     }
   \`,
   args,
-);
+)
 `,
       errors: [
         {
           type: TSESTree.AST_NODE_TYPES.TSTypeParameterInstantiation,
-          messageId: "invalidQueryType",
+          messageId: 'invalidQueryType',
           line: 2,
           column: 14,
           endLine: 2,
@@ -193,17 +193,14 @@ annotateQuery<{ greeting: { __typename: "Greeting"; message: string } }, { langu
       ],
     },
   ],
-});
+})
 
-ruleTester.run(
-  "Missing type annotation on tsql tagged template with Apollo schema",
-  rules["check-query-types"],
-  {
-    valid: [],
-    invalid: [
-      {
-        options: ruleOptions,
-        code: `
+ruleTester.run('Missing type annotation on tsql tagged template with Apollo schema', rules['check-query-types'], {
+  valid: [],
+  invalid: [
+    {
+      options: ruleOptions,
+      code: `
 tgql\`
   query GetGreeting($language: String!) {
     greeting(language: $language) {
@@ -211,42 +208,38 @@ tgql\`
       message
     }
   }
-\`;
+\`
 `,
-        output: `
-tgql<{ greeting: { __typename: "Greeting"; message: string } }, { language: string }>\`
+      output: `
+tgql<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>\`
   query GetGreeting($language: String!) {
     greeting(language: $language) {
       __typename
       message
     }
   }
-\`;
+\`
 `,
-        errors: [
-          {
-            type: TSESTree.AST_NODE_TYPES.Identifier,
-            messageId: "missingQueryType",
-            line: 2,
-            column: 1,
-            endLine: 2,
-            endColumn: 5,
-          },
-        ],
-      },
-    ],
-  },
-);
+      errors: [
+        {
+          type: TSESTree.AST_NODE_TYPES.Identifier,
+          messageId: 'missingQueryType',
+          line: 2,
+          column: 1,
+          endLine: 2,
+          endColumn: 5,
+        },
+      ],
+    },
+  ],
+})
 
-ruleTester.run(
-  "Missing query type annotation with CaregiverGraphQL schema",
-  rules["check-query-types"],
-  {
-    valid: [],
-    invalid: [
-      {
-        options: ruleOptions,
-        code: `
+ruleTester.run('Missing query type annotation with CaregiverGraphQL schema', rules['check-query-types'], {
+  valid: [],
+  invalid: [
+    {
+      options: ruleOptions,
+      code: `
 await CaregiverGraphQL.query(
   conn,
   gql\`
@@ -263,17 +256,17 @@ await CaregiverGraphQL.query(
     }
   \`,
   args,
-);
+)
 `,
-        output: `
+      output: `
 await CaregiverGraphQL.query<
   {
     visibleTrainingCenterBundles: ReadonlyArray<{
-      caregiver_id: CaregiverId;
-      agency_id: AgencyId;
-      caregiver_visible_date: LocalDate;
-      agency: { name: string; website: string };
-    }>;
+      caregiver_id: CaregiverId
+      agency_id: AgencyId
+      caregiver_visible_date: LocalDate
+      agency: { name: string; website: string }
+    }>
   },
   { bundleId: TrainingCenterBundleId }
 >(
@@ -292,26 +285,25 @@ await CaregiverGraphQL.query<
     }
   \`,
   args,
-);
+)
 `,
-        errors: [
-          {
-            type: TSESTree.AST_NODE_TYPES.Identifier,
-            messageId: "missingQueryType",
-            line: 2,
-            column: 24,
-            endLine: 2,
-            endColumn: 29,
-          },
-        ],
-      },
-    ],
-  },
-);
+      errors: [
+        {
+          type: TSESTree.AST_NODE_TYPES.Identifier,
+          messageId: 'missingQueryType',
+          line: 2,
+          column: 24,
+          endLine: 2,
+          endColumn: 29,
+        },
+      ],
+    },
+  ],
+})
 
 ruleTester.run(
-  "Missing query type annotation with CaregiverGraphQL schema without variables",
-  rules["check-query-types"],
+  'Missing query type annotation with CaregiverGraphQL schema without variables',
+  rules['check-query-types'],
   {
     valid: [],
     invalid: [
@@ -327,7 +319,7 @@ await CaregiverGraphQL.query(
             }
         }
     \`
-);
+)
 `,
         output: `
 await CaregiverGraphQL.query<
@@ -342,12 +334,12 @@ await CaregiverGraphQL.query<
             }
         }
     \`
-);
+)
 `,
         errors: [
           {
             type: TSESTree.AST_NODE_TYPES.Identifier,
-            messageId: "missingQueryType",
+            messageId: 'missingQueryType',
             line: 2,
             column: 24,
             endLine: 2,
@@ -357,4 +349,4 @@ await CaregiverGraphQL.query<
       },
     ],
   },
-);
+)
