@@ -389,10 +389,7 @@ const prettifyAnnotationInPlace = (
 
   const prettierConfig = prettier.resolveConfig.sync(context.getFilename());
 
-  const prettyModuleStr = prettier.format(
-    annotatedPlaceholderModuleStr,
-    prettierConfig ? prettierConfig : { parser: "typescript" },
-  );
+  const prettyModuleStr = prettier.format(annotatedPlaceholderModuleStr, { parser: "typescript" });
 
   const sourceCodeProgram = parseSourceCodeProgram(context, prettyModuleStr);
   const moduleSource = new TSESLint.SourceCode(prettyModuleStr, sourceCodeProgram);
