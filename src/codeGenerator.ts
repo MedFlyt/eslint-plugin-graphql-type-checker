@@ -92,7 +92,7 @@ const genResultType_Selection =
   (schema: graphql.GraphQLSchema, parentType: graphql.GraphQLObjectType) =>
   (selection: graphql.SelectionNode): string => {
     switch (selection.kind) {
-      case 'Field': {
+      case graphql.Kind.FIELD: {
         const fieldNode: graphql.FieldNode = selection
 
         if (fieldNode.name.value === '__typename') {
@@ -120,10 +120,10 @@ const genResultType_Selection =
           return `${fieldNode.name.value}: ${typeModifierWrapper(tsBaseType)}`
         }
       }
-      case 'FragmentSpread': {
+      case graphql.Kind.FRAGMENT_SPREAD: {
         throw new Error('genResultType_Selection: Unsupported SelectionNode: FragmentSpreadNode')
       }
-      case 'InlineFragment': {
+      case graphql.Kind.INLINE_FRAGMENT: {
         throw new Error('genResultType_SelectiongenResultType_Selection: Unsupported SelectionNode: InlineFragmentNode')
       }
     }

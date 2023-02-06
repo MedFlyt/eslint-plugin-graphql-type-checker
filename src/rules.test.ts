@@ -1,4 +1,4 @@
-import { ESLintUtils, TSESTree } from '@typescript-eslint/experimental-utils'
+import { ESLintUtils, TSESTree } from '@typescript-eslint/utils'
 import * as path from 'path'
 
 import { RuleOptions, rules } from './rules'
@@ -169,7 +169,10 @@ annotateQuery<{}, {}>(
 )
 `,
       output: `
-annotateQuery<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>(
+annotateQuery<
+  { greeting: { __typename: "Greeting"; message: string } },
+  { language: string }
+>(
   gql\`
     query GetGreeting($language: String!) {
       greeting(language: $language) {
@@ -211,7 +214,10 @@ tgql\`
 \`
 `,
       output: `
-tgql<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>\`
+tgql<
+  { greeting: { __typename: "Greeting"; message: string } },
+  { language: string }
+>\`
   query GetGreeting($language: String!) {
     greeting(language: $language) {
       __typename
@@ -262,11 +268,11 @@ await CaregiverGraphQL.query(
 await CaregiverGraphQL.query<
   {
     visibleTrainingCenterBundles: ReadonlyArray<{
-      caregiver_id: CaregiverId
-      agency_id: AgencyId
-      caregiver_visible_date: LocalDate
-      agency: { name: string; website: string }
-    }>
+      caregiver_id: CaregiverId;
+      agency_id: AgencyId;
+      caregiver_visible_date: LocalDate;
+      agency: { name: string; website: string };
+    }>;
   },
   { bundleId: TrainingCenterBundleId }
 >(
@@ -323,7 +329,9 @@ await CaregiverGraphQL.query(
 `,
         output: `
 await CaregiverGraphQL.query<
-  { visibleTrainingCenterBundles: ReadonlyArray<{ caregiver_id: CaregiverId }> },
+  {
+    visibleTrainingCenterBundles: ReadonlyArray<{ caregiver_id: CaregiverId }>;
+  },
   Record<PropertyKey, never>
 >(
     conn,

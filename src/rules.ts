@@ -1,4 +1,4 @@
-import { ESLintUtils, TSESTree, TSESLint } from '@typescript-eslint/experimental-utils'
+import { ESLintUtils, TSESTree, TSESLint } from '@typescript-eslint/utils'
 import * as parser from '@typescript-eslint/parser'
 import * as fs from 'fs'
 import * as graphql from 'graphql'
@@ -494,7 +494,6 @@ export const rules = {
       fixable: 'code',
       docs: {
         requiresTypeChecking: false,
-        category: 'Possible Errors',
         recommended: 'error',
         description: 'Generates & validates TypeScript type annotations for GraphQL queries.',
       },

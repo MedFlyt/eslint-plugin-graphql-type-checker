@@ -1,4 +1,4 @@
-import { TSESTree, TSESLint } from '@typescript-eslint/experimental-utils'
+import { TSESTree, TSESLint } from '@typescript-eslint/utils'
 
 // Copied from ts-gql package
 export function* getNodes(
