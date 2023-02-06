@@ -1,6 +1,14 @@
 name: Build and test
 
-on: [push]
+on:
+  push:
+    branches-ignore:
+      - master
+      - production
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-test:
@@ -8,16 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x, 15.x]
+        node-version: [14.x, 16.x, 18.x]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7.25.0
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm i
-      - run: npm run --silent install-demo
-      - run: npm run --silent prettier-check
-      - run: npm run --silent build
-      - run: npm test
+          cache: 'pnpm'
+      - run: pnpm i
+      - run: pnpm --silent install-demo
+      - run: pnpm --silent prettier-check
+      - run: pnpm --silent build
+      - run: pnpm test

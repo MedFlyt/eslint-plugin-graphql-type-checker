@@ -9,7 +9,8 @@ import * as codeGenerator from './codeGenerator'
 import * as eslintUtils from './eslintUtils'
 import * as utils from './utils'
 
-import type { JSONSchema4 } from 'json-schema'
+import { z } from 'zod'
+import zodToJsonSchema from 'zod-to-json-schema'
 
 const messages = {
   noInterpolation: 'Interpolation not allowed in gql tagged templates',
@@ -31,73 +32,35 @@ type RuleContext = TSESLint.RuleContext<MessageId, RuleOptions>
 
 type RuleReporter = (report: TSESLint.ReportDescriptor<MessageId>) => void
 
-const checkQueryTypesRuleSchema: JSONSchema4 = {
-  type: 'array',
-  minItems: 1,
-  maxItems: 1,
-  items: {
-    type: 'object',
-    required: ['annotationTargets'],
-    properties: {
-      annotationTargets: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            function: {
-              type: 'object',
-              properties: { name: { type: 'string' } },
-              required: ['name'],
-            },
-            method: {
-              type: 'object',
-              properties: {
-                objectName: { type: 'string' },
-                methodName: { type: 'string' },
-              },
-              required: ['objectName', 'methodName'],
-            },
-            taggedTemplate: {
-              type: 'object',
-              properties: { name: { type: 'string' } },
-              required: ['name'],
-            },
-            schemaFilePath: { type: 'string' },
-          },
-          oneOf: [
-            {
-              required: ['function'],
-            },
-            {
-              required: ['method'],
-            },
-            {
-              required: ['taggedTemplate'],
-            },
-          ],
-          required: ['schemaFilePath'],
-          additionalProperties: false,
-        },
-      },
-    },
-    additionalProperties: false,
-  },
-}
+const zFunctionTarget = z.object({ function: z.object({ name: z.string() }) })
+type FunctionTarget = z.infer<typeof zFunctionTarget>
 
-type FunctionTarget = { function: { name: string } }
-type MethodTarget = {
-  method: { objectName: string; methodName: string }
-}
-type TaggedTemplateTarget = { taggedTemplate: { name: string } }
-export type RuleOptions = [
-  {
-    annotationTargets: Array<
-      (FunctionTarget | MethodTarget | TaggedTemplateTarget) & {
-        schemaFilePath: string
-      }
-    >
-  },
-]
+const zMethodTarget = z.object({
+  method: z.object({ objectName: z.string(), methodName: z.string() }),
+})
+type MethodTarget = z.infer<typeof zMethodTarget>
+
+const zTaggedTemplateTarget = z.object({ taggedTemplate: z.object({ name: z.string() }) })
+type TaggedTemplateTarget = z.infer<typeof zTaggedTemplateTarget>
+
+const zBaseAnnotationTarget = z.object({
+  schemaFilePath: z.string(),
+  omitEmptyVariables: z.boolean().optional(),
+})
+type BaseAnnotationTarget = z.infer<typeof zBaseAnnotationTarget>
+
+const zAnnotationTarget = z.union([
+  zBaseAnnotationTarget.merge(zFunctionTarget),
+  zBaseAnnotationTarget.merge(zMethodTarget),
+  zBaseAnnotationTarget.merge(zTaggedTemplateTarget),
+])
+type AnnotationTarget = z.infer<typeof zAnnotationTarget>
+
+const zRuleOptions = z
+  .array(z.object({ annotationTargets: z.array(zAnnotationTarget) }))
+  .min(1)
+  .max(1)
+export type RuleOptions = z.infer<typeof zRuleOptions>
 
 const getTaggedTemplateConfig = (ruleOptions: RuleOptions, tagName: string) => {
   const matchingTargets = ruleOptions[0].annotationTargets.filter(
@@ -113,7 +76,7 @@ const getTaggedTemplateConfig = (ruleOptions: RuleOptions, tagName: string) => {
 
 const getFunctionTargetConfig = (ruleOptions: RuleOptions, functionName: string) => {
   const matchingTargets = ruleOptions[0].annotationTargets.filter(
-    (target): target is FunctionTarget & { schemaFilePath: string } =>
+    (target): target is FunctionTarget & BaseAnnotationTarget =>
       'function' in target && target.function.name === functionName,
   )
 
@@ -127,7 +90,7 @@ const getFunctionTargetConfig = (ruleOptions: RuleOptions, functionName: string)
 
 const getMethodTargetConfig = (ruleOptions: RuleOptions, objectName: string, methodName: string) => {
   const matchingTargets = ruleOptions[0].annotationTargets.filter(
-    (target): target is MethodTarget & { schemaFilePath: string } =>
+    (target): target is MethodTarget & BaseAnnotationTarget =>
       'method' in target && target.method.objectName === objectName && target.method.methodName === methodName,
   )
 
@@ -150,7 +113,15 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
           const { schemaFilePath } = targetConfig
           const gqlStr = getGqlString(context.report, expr)
           if (gqlStr !== null) {
-            checkQueryTypes_Rule(context, schemaFilePath, expr, gqlStr, expr.tag, expr.typeParameters)
+            checkQueryTypes_Rule({
+              context,
+              schemaFilePath,
+              taggedGqlTemplate: expr,
+              gqlStr,
+              annotationTarget: expr.tag,
+              typeAnnotation: expr.typeParameters,
+              omitEmptyVariables: targetConfig.omitEmptyVariables ?? false,
+            })
           }
         }
       }
@@ -190,7 +161,15 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
           if (taggedGqlTemplate !== undefined) {
             const gqlStr = getGqlString(context.report, taggedGqlTemplate)
             if (gqlStr !== null) {
-              checkQueryTypes_Rule(context, schemaFilePath, taggedGqlTemplate, gqlStr, targetFunction, typeAnnotation)
+              checkQueryTypes_Rule({
+                context,
+                schemaFilePath,
+                taggedGqlTemplate,
+                gqlStr,
+                annotationTarget: targetFunction,
+                typeAnnotation,
+                omitEmptyVariables: targetConfig.omitEmptyVariables ?? false,
+              })
             }
           }
         }
@@ -205,14 +184,18 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
   }
   return listener
 }
-const checkQueryTypes_Rule = (
-  context: RuleContext,
-  schemaFilePath: string,
-  taggedGqlTemplate: TSESTree.TaggedTemplateExpression,
-  gqlStr: string,
-  annotationTarget: TSESTree.Identifier,
-  typeAnnotation?: TSESTree.TSTypeParameterInstantiation,
-) => {
+const checkQueryTypes_Rule = (params: {
+  context: RuleContext
+  schemaFilePath: string
+  taggedGqlTemplate: TSESTree.TaggedTemplateExpression
+  gqlStr: string
+  annotationTarget: TSESTree.Identifier
+  typeAnnotation?: TSESTree.TSTypeParameterInstantiation
+  omitEmptyVariables: boolean
+}) => {
+  const { context, schemaFilePath, taggedGqlTemplate, gqlStr, annotationTarget, typeAnnotation, omitEmptyVariables } =
+    params
+
   const absoluteSchemaFilePath = path.resolve(schemaFilePath)
   const schemaFileContentsResult = readSchema(absoluteSchemaFilePath)
   if (utils.isError(schemaFileContentsResult)) {
@@ -257,8 +240,14 @@ const checkQueryTypes_Rule = (
           if (validationReportDescriptor) {
             context.report(validationReportDescriptor)
           } else {
-            const { argumentsType, resultType } = codeGenerator.generateTypes(schema, gqlOperationDocument)
-            const inferredTypeAnnotationStr = `<${resultType}, ${argumentsType}>`
+            const { argumentsType, resultType } = codeGenerator.generateTypes({
+              schema: schema,
+              document: gqlOperationDocument,
+            })
+            const inferredTypeAnnotationStr =
+              omitEmptyVariables && argumentsType === codeGenerator.EMPTY_OBJECT_TYPE
+                ? `<${resultType}>`
+                : `<${resultType}, ${argumentsType}>`
 
             const currentTypeAnnotationStr = typeAnnotation
               ? context.getSourceCode().text.slice(typeAnnotation.range[0], typeAnnotation.range[1])
@@ -487,6 +476,8 @@ const urlCreator = (_ruleName: string) =>
 
 const checkQueryTypes_RuleName = 'check-query-types'
 
+console.log(JSON.stringify(zodToJsonSchema(zRuleOptions, { target: 'openApi3' }), null, 2))
+
 export const rules = {
   [checkQueryTypes_RuleName]: ESLintUtils.RuleCreator(urlCreator)<RuleOptions, MessageId>({
     name: checkQueryTypes_RuleName,
@@ -499,7 +490,7 @@ export const rules = {
       },
       messages,
       type: 'problem',
-      schema: checkQueryTypesRuleSchema,
+      schema: zodToJsonSchema(zRuleOptions, { target: 'openApi3' }),
     },
     defaultOptions: [{ annotationTargets: [] }],
     create: checkQueryTypes_RuleListener,

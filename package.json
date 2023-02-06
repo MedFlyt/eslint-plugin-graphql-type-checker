@@ -31,14 +31,14 @@
   "homepage": "https://github.com/MedFlyt/eslint-plugin-graphql-type-checker#readme",
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
-    "build-watch": "npm run build -- --watch",
+    "build-watch": "pnpmn build -- --watch",
     "clean": "rm -rf dist",
-    "install-demo": "cd src/demo && npm install",
+    "install-demo": "cd src/demo && pnpm install",
     "lint-demo-queries": "eslint --ext .ts src/demo/queries",
-    "lint-watch-demo-queries": "nodemon --watch dist --watch src/demo/queries --exec 'npm run lint-demo-queries'",
-    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "lint-watch-demo-queries": "nodemon --watch dist --watch src/demo/queries --exec 'pnpm lint-demo-queries'",
+    "prepublishOnly": "pnpm clean && pnpm build && pnpm test",
     "prettier-check": "prettier -l '**/*.{ts,tsx,js,scss}'",
-    "prettier-fix": "npm run prettier-check -- --write",
+    "prettier-fix": "pnpm prettier-check -- --write",
     "test": "jest",
     "test-watch": "npm test -- --watch"
   },
@@ -46,7 +46,9 @@
     "@typescript-eslint/parser": "^5.50.0",
     "@typescript-eslint/utils": "^5.50.0",
     "graphql": "^16.6.0",
-    "prettier": "^2.8.3"
+    "prettier": "^2.8.3",
+    "zod": "^3.20.2",
+    "zod-to-json-schema": "^3.20.2"
   },
   "devDependencies": {
     "@types/eslint": "^8.21.0",

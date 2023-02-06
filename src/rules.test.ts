@@ -2,6 +2,7 @@ import { ESLintUtils, TSESTree } from '@typescript-eslint/utils'
 import * as path from 'path'
 
 import { RuleOptions, rules } from './rules'
+import { normalizeIndent } from './utils'
 
 const ruleTester = new ESLintUtils.RuleTester({
   parser: '@typescript-eslint/parser',
@@ -358,3 +359,51 @@ await CaregiverGraphQL.query<
     ],
   },
 )
+
+ruleTester.run('omitEmptyVariables flag', rules['check-query-types'], {
+  valid: [],
+  invalid: [
+    {
+      options: [
+        {
+          annotationTargets: [
+            {
+              omitEmptyVariables: true,
+              taggedTemplate: { name: 'gql' },
+              schemaFilePath: 'src/schemas/caregiver-schema.graphql',
+            },
+          ],
+        },
+      ],
+      code: normalizeIndent`
+            gql\`
+                query {
+                    agencies {
+                        name
+                    }
+                }
+            \`
+        `,
+
+      output: normalizeIndent`
+            gql<{ agencies: ReadonlyArray<{ name: string }> }>\`
+                query {
+                    agencies {
+                        name
+                    }
+                }
+            \`
+        `,
+      errors: [
+        {
+          type: TSESTree.AST_NODE_TYPES.Identifier,
+          messageId: 'missingQueryType',
+          line: 2,
+          column: 1,
+          endLine: 2,
+          endColumn: 4,
+        },
+      ],
+    },
+  ],
+})

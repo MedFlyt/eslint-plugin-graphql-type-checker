@@ -16,12 +16,16 @@ specifiers:
   prettier: ^2.8.3
   ts-jest: ^29.0.5
   typescript: ^4.9.5
+  zod: ^3.20.2
+  zod-to-json-schema: ^3.20.2
 
 dependencies:
   '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
   '@typescript-eslint/utils': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
   graphql: 16.6.0
   prettier: 2.8.3
+  zod: 3.20.2
+  zod-to-json-schema: 3.20.2_zod@3.20.2
 
 devDependencies:
   '@types/eslint': 8.21.0
@@ -2971,3 +2975,15 @@ packages:
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  /zod-to-json-schema/3.20.2_zod@3.20.2:
+    resolution: {integrity: sha512-qka3UAXmVXD8z5SHkRU89UyHp8JHJW7zc8RQCpt7QloJOn6uijwkjUm8o+M/cF1IysmKc5gxac/QeDikaQMdzQ==}
+    peerDependencies:
+      zod: ^3.20.0
+    dependencies:
+      zod: 3.20.2
+    dev: false
+
+  /zod/3.20.2:
+    resolution: {integrity: sha512-1MzNQdAvO+54H+EaK5YpyEy0T+Ejo/7YLHS93G3RnYWh5gaotGHwGeN/ZO687qEDU2y4CdStQYXVHIgrUl5UVQ==}
+    dev: false

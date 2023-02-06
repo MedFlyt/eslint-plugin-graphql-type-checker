@@ -42,6 +42,8 @@ const typeFromAst = (
 
 // ArgumentsType generation:
 
+export const EMPTY_OBJECT_TYPE = 'Record<PropertyKey, never>'
+
 const genArgumentsType_OperationDefinition = (
   schema: graphql.GraphQLSchema,
   operationDef: graphql.OperationDefinitionNode,
@@ -49,7 +51,7 @@ const genArgumentsType_OperationDefinition = (
   const variableDefinitions = operationDef.variableDefinitions ?? []
 
   if (variableDefinitions.length === 0) {
-    return `Record<PropertyKey, never>`
+    return EMPTY_OBJECT_TYPE
   }
 
   const variableDefinitionsStr = variableDefinitions.map(genArgumentsType_VariableDefinition(schema)).join(', ')
@@ -131,10 +133,12 @@ const genResultType_Selection =
 
 // Main:
 
-export const generateTypes = (
-  schema: graphql.GraphQLSchema,
-  document: graphql.DocumentNode,
-): { argumentsType: string; resultType: string } => {
+export const generateTypes = (params: {
+  schema: graphql.GraphQLSchema
+  document: graphql.DocumentNode
+}): { argumentsType: string; resultType: string } => {
+  const { schema, document } = params
+
   if (document.definitions.length === 1 && document.definitions[0].kind === 'OperationDefinition') {
     const argumentsType = genArgumentsType_OperationDefinition(schema, document.definitions[0])
     const resultType = genResultType_OperationDefinition(schema, document.definitions[0])
