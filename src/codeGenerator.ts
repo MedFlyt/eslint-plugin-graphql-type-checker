@@ -42,7 +42,7 @@ const typeFromAst = (
 
 // ArgumentsType generation:
 
-export const EMPTY_OBJECT_TYPE = 'Record<PropertyKey, never>';
+export const EMPTY_OBJECT_TYPE = 'Record<PropertyKey, never>'
 
 const genArgumentsType_OperationDefinition = (
   schema: graphql.GraphQLSchema,
