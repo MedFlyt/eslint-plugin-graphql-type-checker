@@ -2,6 +2,7 @@ type Query {
   visibleTrainingCenterBundles(
     bundle_id: TrainingCenterBundleId_Filter
   ): [VisibleTrainingCenterBundle!]!
+  agencies: [Agency!]!
 }
 
 scalar TrainingCenterBundleId

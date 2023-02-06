@@ -49,7 +49,10 @@ const main = () => {
             const errorMessage = validationErrors.map(graphql.printError).join('\n')
             console.error(errorMessage)
           } else {
-            const { argumentsType, resultType } = codeGenerator.generateTypes(schema, gqlOperationDocument)
+            const { argumentsType, resultType } = codeGenerator.generateTypes({
+              schema,
+              document: gqlOperationDocument,
+            })
             const inferredDeclarations = `type QueryResult = ${resultType}\n` + `type QueryArguments = ${argumentsType}`
 
             const prettierConfig = prettier.resolveConfig.sync(path.join(__dirname, '../.prettierrc'))
