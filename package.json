@@ -33,7 +33,7 @@
     "build": "tsc -p ./tsconfig.json",
     "build-watch": "npm run build -- --watch",
     "clean": "rm -rf dist",
-    "install-demo": "cd src/demo && npm install",
+    "install-demo": "cd src/demo && pnpm install",
     "lint-demo-queries": "eslint --ext .ts src/demo/queries",
     "lint-watch-demo-queries": "nodemon --watch dist --watch src/demo/queries --exec 'npm run lint-demo-queries'",
     "prepublishOnly": "npm run clean && npm run build && npm test",
