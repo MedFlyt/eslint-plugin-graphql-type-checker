@@ -401,9 +401,6 @@ ruleTester.run(
           {
             type: TSESTree.AST_NODE_TYPES.Identifier,
             messageId: 'missingQueryType',
-            // data: {
-            //     asd: 1
-            // },
             line: 2,
             column: 1,
             endLine: 2,
