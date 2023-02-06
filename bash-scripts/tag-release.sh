@@ -40,7 +40,7 @@ then
   pnpm i
   pnpm run --silent install-demo
 
-  git add package.json package-lock.json src/demo/package-lock.json
+  git add package.json pnpm-lock.yaml src/demo/pnpm-lock.yaml
   git commit -m "Release ${newVersion}"
   git tag -a "v${newVersion}" -m "Release ${newVersion}"
 else
