@@ -37,8 +37,8 @@ then
   sed -i '' -e "s/\(\"version\": *\"\).*\(\".*\)$/\1${newVersion}\2/" package.json
 
   # Npm install to bump versions in package-lock.json and src/demo/package-lock.json:
-  npm i
-  npm run --silent install-demo
+  pnpm i
+  pnpm run --silent install-demo
 
   git add package.json package-lock.json src/demo/package-lock.json
   git commit -m "Release ${newVersion}"
