@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'pnpm'
       - run: pnpm i
       - run: pnpm --silent install-demo
       - run: pnpm --silent prettier-check
