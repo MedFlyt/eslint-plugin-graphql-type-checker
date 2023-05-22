@@ -1,6 +1,6 @@
 {
   "name": "@medflyt/eslint-plugin-graphql-type-checker",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "ESLint plugin that generates & validates TypeScript type annotations for GraphQL queries",
   "main": "./dist/rules.js",
   "author": "MedFlyt",
@@ -31,7 +31,7 @@
   "homepage": "https://github.com/MedFlyt/eslint-plugin-graphql-type-checker#readme",
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
-    "build-watch": "pnpmn build -- --watch",
+    "build-watch": "pnpm build -- --watch",
     "clean": "rm -rf dist",
     "install-demo": "cd src/demo && pnpm install",
     "lint-demo-queries": "eslint --ext .ts src/demo/queries",
