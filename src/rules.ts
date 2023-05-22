@@ -476,8 +476,6 @@ const urlCreator = (_ruleName: string) =>
 
 const checkQueryTypes_RuleName = 'check-query-types'
 
-console.log(JSON.stringify(zodToJsonSchema(zRuleOptions, { target: 'openApi3' }), null, 2))
-
 export const rules = {
   [checkQueryTypes_RuleName]: ESLintUtils.RuleCreator(urlCreator)<RuleOptions, MessageId>({
     name: checkQueryTypes_RuleName,
