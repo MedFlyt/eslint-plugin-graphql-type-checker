@@ -1,10 +1,16 @@
-import { ESLintUtils, TSESTree } from '@typescript-eslint/utils'
+import { RuleTester } from '@typescript-eslint/rule-tester'
+import { TSESTree } from '@typescript-eslint/utils'
 import * as path from 'path'
+import { afterAll, describe, it } from 'vitest'
 
 import { RuleOptions, rules } from './rules'
 import { normalizeIndent } from './utils'
 
-const ruleTester = new ESLintUtils.RuleTester({
+RuleTester.it = it
+RuleTester.describe = describe
+RuleTester.afterAll = afterAll
+
+const ruleTester = new RuleTester({
   parser: '@typescript-eslint/parser',
 })
 

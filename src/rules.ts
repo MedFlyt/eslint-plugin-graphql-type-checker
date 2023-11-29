@@ -11,6 +11,7 @@ import * as utils from './utils'
 
 import { z } from 'zod'
 import zodToJsonSchema from 'zod-to-json-schema'
+import { JSONSchema4 } from '@typescript-eslint/utils/json-schema'
 
 const messages = {
   noInterpolation: 'Interpolation not allowed in gql tagged templates',
@@ -135,13 +136,13 @@ const checkQueryTypes_RuleListener = (context: RuleContext): TSESLint.RuleListen
           callee.type === 'Identifier'
             ? ([callee, getFunctionTargetConfig(context.options, callee.name)] as const)
             : callee.type === 'MemberExpression' &&
-              callee.object.type === 'Identifier' &&
-              callee.property.type === 'Identifier'
-            ? ([
-                callee.property,
-                getMethodTargetConfig(context.options, callee.object.name, callee.property.name),
-              ] as const)
-            : null
+                callee.object.type === 'Identifier' &&
+                callee.property.type === 'Identifier'
+              ? ([
+                  callee.property,
+                  getMethodTargetConfig(context.options, callee.object.name, callee.property.name),
+                ] as const)
+              : null
 
         if (targetFunctionAndConfig !== null && targetFunctionAndConfig[1] !== null) {
           const [targetFunction, targetConfig] = targetFunctionAndConfig
@@ -483,12 +484,12 @@ export const rules = {
       fixable: 'code',
       docs: {
         requiresTypeChecking: false,
-        recommended: 'error',
+        recommended: 'recommended',
         description: 'Generates & validates TypeScript type annotations for GraphQL queries.',
       },
       messages,
       type: 'problem',
-      schema: zodToJsonSchema(zRuleOptions, { target: 'openApi3' }),
+      schema: zodToJsonSchema(zRuleOptions, { target: 'openApi3' }) as JSONSchema4,
     },
     defaultOptions: [{ annotationTargets: [] }],
     create: checkQueryTypes_RuleListener,

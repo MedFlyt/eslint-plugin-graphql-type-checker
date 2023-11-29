@@ -6,17 +6,16 @@ import React from 'react'
 const annotateQuery = <TData, TVariables>(gql: Apollo.DocumentNode): Apollo.TypedDocumentNode<TData, TVariables> => gql
 
 // Typed query that is annotated by the plugin.
-const greetingQuery = annotateQuery<
-  { greeting: { __typename: 'Greeting'; message: string } },
-  { language: string }
->(gql`
-  query GetGreeting($language: String!) {
-    greeting(language: $language) {
-      __typename
-      message
+const greetingQuery = annotateQuery<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>(
+  gql`
+    query GetGreeting($language: String!) {
+      greeting(language: $language) {
+        __typename
+        message
+      }
     }
-  }
-`)
+  `,
+)
 
 export const App = () => {
   const { data } = useQuery(greetingQuery, {
