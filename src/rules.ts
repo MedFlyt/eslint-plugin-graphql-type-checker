@@ -1,17 +1,17 @@
-import { ESLintUtils, TSESTree, TSESLint } from '@typescript-eslint/utils'
+import prettier from '@prettier/sync'
 import * as parser from '@typescript-eslint/parser'
+import { ESLintUtils, TSESLint, TSESTree } from '@typescript-eslint/utils'
 import * as fs from 'fs'
 import * as graphql from 'graphql'
 import * as path from 'path'
-import * as prettier from 'prettier'
 
 import * as codeGenerator from './codeGenerator'
 import * as eslintUtils from './eslintUtils'
 import * as utils from './utils'
 
+import { JSONSchema4 } from '@typescript-eslint/utils/json-schema'
 import { z } from 'zod'
 import zodToJsonSchema from 'zod-to-json-schema'
-import { JSONSchema4 } from '@typescript-eslint/utils/json-schema'
 
 const messages = {
   noInterpolation: 'Interpolation not allowed in gql tagged templates',
@@ -453,8 +453,6 @@ const prettifyAnnotationInPlace = (
     placeholderModuleStr.slice(0, annotationRange[0] + annotationTargetLength) + // NOTE: PLACEHOLDER is twice as long
     annotation +
     placeholderModuleStr.slice(annotationRange[1] + annotationTargetLength) // NOTE: PLACEHOLDER is twice as long
-
-  const prettierConfig = prettier.resolveConfig.sync(context.getFilename())
 
   const prettyModuleStr = prettier.format(annotatedPlaceholderModuleStr, { parser: 'typescript' })
 

@@ -44,6 +44,7 @@
     "test:watch": "npm vitest"
   },
   "dependencies": {
+    "@prettier/sync": "^0.3.0",
     "@typescript-eslint/parser": "^6.13.1",
     "@typescript-eslint/utils": "^6.13.1",
     "graphql": "^16.8.1",

@@ -1,7 +1,7 @@
 import * as graphql from 'graphql'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as prettier from 'prettier'
+import prettier from '@prettier/sync'
 
 import * as codeGenerator from './codeGenerator'
 import * as utils from './utils'
@@ -19,7 +19,7 @@ query GetGreeting($language: String!) {
 }
 `
 
-const main = async () => {
+const main = () => {
   console.log(`Generating types for schema file '${schemaFilePath}' and operation:\n${gqlStr.trim()}\n`)
 
   const absoluteSchemaFilePath = path.resolve(schemaFilePath)
@@ -55,9 +55,9 @@ const main = async () => {
             })
             const inferredDeclarations = `type QueryResult = ${resultType}\n` + `type QueryArguments = ${argumentsType}`
 
-            const prettierConfig = await prettier.resolveConfig(path.join(__dirname, '../.prettierrc'))
+            const prettierConfig = prettier.resolveConfig(path.join(__dirname, '../.prettierrc'))
 
-            const prettyModuleStr = await prettier.format(
+            const prettyModuleStr = prettier.format(
               inferredDeclarations,
               prettierConfig ? prettierConfig : { parser: 'typescript' },
             )
