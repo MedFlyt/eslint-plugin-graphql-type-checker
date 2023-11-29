@@ -1,7 +1,7 @@
 import * as graphql from 'graphql'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as prettier from 'prettier'
+import prettier from '@prettier/sync'
 
 import * as codeGenerator from './codeGenerator'
 import * as utils from './utils'
@@ -55,7 +55,7 @@ const main = () => {
             })
             const inferredDeclarations = `type QueryResult = ${resultType}\n` + `type QueryArguments = ${argumentsType}`
 
-            const prettierConfig = prettier.resolveConfig.sync(path.join(__dirname, '../.prettierrc'))
+            const prettierConfig = prettier.resolveConfig(path.join(__dirname, '../.prettierrc'))
 
             const prettyModuleStr = prettier.format(
               inferredDeclarations,

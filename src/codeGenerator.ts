@@ -37,8 +37,8 @@ const typeFromAst = (
   typeNode.kind === 'ListType'
     ? graphql.typeFromAST(schema, typeNode)
     : typeNode.kind === 'NonNullType'
-    ? graphql.typeFromAST(schema, typeNode)
-    : graphql.typeFromAST(schema, typeNode)
+      ? graphql.typeFromAST(schema, typeNode)
+      : graphql.typeFromAST(schema, typeNode)
 
 // ArgumentsType generation:
 

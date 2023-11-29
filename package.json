@@ -30,40 +30,42 @@
   },
   "homepage": "https://github.com/MedFlyt/eslint-plugin-graphql-type-checker#readme",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json",
-    "build-watch": "pnpm build -- --watch",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup",
+    "build:watch": "pnpm build --watch",
     "clean": "rm -rf dist",
-    "install-demo": "cd src/demo && pnpm install",
-    "lint-demo-queries": "eslint --ext .ts src/demo/queries",
-    "lint-watch-demo-queries": "nodemon --watch dist --watch src/demo/queries --exec 'pnpm lint-demo-queries'",
+    "install:demo": "cd src/demo && pnpm install",
+    "lint-demo": "eslint --ext .ts src/demo/queries",
+    "lint-demo:watch": "nodemon --watch dist --watch src/demo/queries --exec 'pnpm lint-demo-queries'",
     "prepublishOnly": "pnpm clean && pnpm build && pnpm test",
-    "prettier-check": "prettier -l '**/*.{ts,tsx,js,scss}'",
-    "prettier-fix": "pnpm prettier-check -- --write",
-    "test": "jest",
-    "test-watch": "npm test -- --watch"
+    "prettier": "prettier -l '**/*.{ts,tsx,js,scss}'",
+    "prettier:fix": "pnpm run prettier --write",
+    "test": "vitest run",
+    "test:watch": "npm vitest"
   },
   "dependencies": {
-    "@typescript-eslint/parser": "^5.50.0",
-    "@typescript-eslint/utils": "^5.50.0",
-    "graphql": "^16.6.0",
-    "prettier": "^2.8.3",
+    "@prettier/sync": "^0.3.0",
+    "@typescript-eslint/parser": "^6.13.1",
+    "@typescript-eslint/utils": "^6.13.1",
+    "graphql": "^16.8.1",
+    "prettier": "^3.1.0",
     "zod": "^3.20.2",
-    "zod-to-json-schema": "^3.20.2"
+    "zod-to-json-schema": "3.22.1"
   },
   "devDependencies": {
-    "@types/eslint": "^8.21.0",
+    "@types/eslint": "^8.44.7",
     "@types/json-schema": "^7.0.11",
     "@types/node": "^18.11.19",
-    "@types/prettier": "^2.7.2",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "eslint": "^8.33.0",
+    "@types/prettier": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/rule-tester": "^6.13.1",
+    "eslint": "^8.54.0",
     "graphql-tag": "^2.12.6",
-    "jest": "^29.4.1",
-    "nodemon": "^2.0.20",
-    "ts-jest": "^29.0.5",
-    "typescript": "^4.9.5"
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.2",
+    "vitest": "^0.34.6"
   },
   "peerDependencies": {
-    "graphql": "^15.5.0"
+    "graphql": "^16.8.1"
   }
 }
