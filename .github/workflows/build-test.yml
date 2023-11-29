@@ -28,8 +28,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
       - run: pnpm i
-      - run: pnpm --silent install-demo
-      - run: pnpm --silent prettier-check
+      - run: pnpm --silent install:demo
+      - run: pnpm prettier
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
