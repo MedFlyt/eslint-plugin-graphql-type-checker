@@ -19,7 +19,7 @@ query GetGreeting($language: String!) {
 }
 `
 
-const main = () => {
+const main = async () => {
   console.log(`Generating types for schema file '${schemaFilePath}' and operation:\n${gqlStr.trim()}\n`)
 
   const absoluteSchemaFilePath = path.resolve(schemaFilePath)
@@ -55,9 +55,9 @@ const main = () => {
             })
             const inferredDeclarations = `type QueryResult = ${resultType}\n` + `type QueryArguments = ${argumentsType}`
 
-            const prettierConfig = prettier.resolveConfig.sync(path.join(__dirname, '../.prettierrc'))
+            const prettierConfig = await prettier.resolveConfig(path.join(__dirname, '../.prettierrc'))
 
-            const prettyModuleStr = prettier.format(
+            const prettyModuleStr = await prettier.format(
               inferredDeclarations,
               prettierConfig ? prettierConfig : { parser: 'typescript' },
             )
