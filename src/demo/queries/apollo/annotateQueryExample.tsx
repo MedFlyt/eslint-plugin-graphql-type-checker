@@ -1,9 +1,10 @@
-import Apollo, { gql, useQuery } from '@apollo/client'
+import { gql, useQuery } from '@apollo/client'
+import { DocumentNode, TypedQueryDocumentNode } from 'graphql'
 import React from 'react'
 
 // Helper identity function that converts untyped DocumentNodes to TypedDocumentNodes, and that can be
 // targeted by the plugin.
-const annotateQuery = <TData, TVariables>(gql: Apollo.DocumentNode): Apollo.TypedDocumentNode<TData, TVariables> => gql
+const annotateQuery = <TData, TVariables>(gql: DocumentNode): TypedQueryDocumentNode<TData, TVariables> => gql as any
 
 // Typed query that is annotated by the plugin.
 const greetingQuery = annotateQuery<{ greeting: { __typename: 'Greeting'; message: string } }, { language: string }>(
