@@ -99,7 +99,7 @@ const genResultType_Selection =
 
         if (fieldNode.name.value === '__typename') {
           // TODO: not sure how this holds on union types and others.
-          return `${fieldNode.name.value}: '${parentType.name}'`
+          return `${fieldNode.alias?.value ?? fieldNode.name.value}: '${parentType.name}'`
         } else {
           const parentFieldMap: graphql.GraphQLFieldMap<any, any> = parentType.getFields()
           const field = parentFieldMap[fieldNode.name.value]
@@ -119,7 +119,7 @@ const genResultType_Selection =
           } else {
             tsBaseType = convertScalars(namedType.name)
           }
-          return `${fieldNode.name.value}: ${typeModifierWrapper(tsBaseType)}`
+          return `${fieldNode.alias?.value ?? fieldNode.name.value}: ${typeModifierWrapper(tsBaseType)}`
         }
       }
       case graphql.Kind.FRAGMENT_SPREAD: {
