@@ -413,3 +413,46 @@ ruleTester.run('omitEmptyVariables flag', rules['check-query-types'], {
     },
   ],
 })
+
+ruleTester.run('aliases', rules['check-query-types'], {
+  valid: [],
+  invalid: [
+    {
+      options: [
+        {
+          annotationTargets: [
+            {
+              omitEmptyVariables: true,
+              taggedTemplate: { name: 'gql' },
+              schemaFilePath: 'src/schemas/caregiver-schema.graphql',
+            },
+          ],
+        },
+      ],
+      code: normalizeIndent`
+            gql\`
+                query {
+                    myalias: agencies {
+                        name
+                    }
+                }
+            \`
+        `,
+      output: normalizeIndent`
+            gql<{ myalias: ReadonlyArray<{ name: string }> }>\`
+                query {
+                    myalias: agencies {
+                        name
+                    }
+                }
+            \`
+        `,
+      errors: [
+        {
+          type: TSESTree.AST_NODE_TYPES.Identifier,
+          messageId: 'missingQueryType',
+        },
+      ],
+    },
+  ],
+})
